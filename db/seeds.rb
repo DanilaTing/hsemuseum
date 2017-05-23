@@ -1,39 +1,138 @@
-# This file should contain all the record creation needed to seed the database with its default values.
-# The data can then be loaded with the rails db:seed command (or created alongside the database with db:setup).
-#
-# Examples:
-#
-#   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
-#   Character.create(name: 'Luke', movie: movies.first)
+#Reset Database
+Rake::Task['db:drop'].invoke
+Rake::Task['db:create'].invoke
+Rake::Task['db:migrate'].invoke
 
-Artist.create([
+# Set Fake Data
+@artists = [
   {
     name: 'Казимир Малевич',
-    born: '1879',
-    died: '1935'
+    died: 1935,
+    born: 1879
   }, {
     name: 'Владимир Татлин',
-    born: '1885',
-    died: '1953'
+    born: 1885,
+    died: 1953
   }, {
     name: 'Павел Филонов',
-    born: '1883',
-    died: '1941'
+    born: 1883,
+    died: 1941
   }, {
     name: 'Илья Чашник',
-    born: '1902',
-    died: '1929'
+    born: 1902,
+    died: 1929
   }, {
     name: 'Марк Шагал',
-    born: '1887',
-    died: '1985'
+    born: 1887,
+    died: 1985
   }, {
     name: 'Эль Лисицкий',
-    born: '1890',
-    died: '1941'
+    born: 1890,
+    died: 1941
   }, {
     name: 'Александр Родченко',
-    born: '1891',
-    died: '1956'
+    born: 1891,
+    died: 1956
   }
-])
+]
+
+@artwork_titles = [
+  'Черный квадрат',
+  'Башня третьего интернационала',
+  'Амазонка'
+]
+
+@galleries = [
+  {
+    title: 'Супрематизм',
+    teaser: 'Супремати́зм — направление в авангардистском искусстве, основанное в 1-й половине 1910-х годов К. С. Малевичем. Являясь разновидностью абстракционизма, супрематизм выражался в комбинациях разноцветных плоскостей простейших геометрических очертаний.',
+    background: 'FF0000'
+  }, {
+    title: 'Кубизм',
+    teaser: 'Кубизм (фр.cubisme, от cube – куб) – художественное направление во французском искусстве начала ХХ века, основателями и крупнейшими представителями которого были Пабло Пикассо и Жорж Брак.',
+    background: '00FF00'
+  }, {
+    title: 'Авангард',
+    teaser: 'Аванга́рд, авангарди́зм — обобщающее название течений в мировом, прежде всего в европейском искусстве, возникших на рубеже XIX и XX веков.',
+    background: '0000FF'
+  }, {
+    title: 'Минимализм',
+    teaser: 'Ми́нимал-арт (англ. Minimal art), также Минимали́зм (англ. Minimalism), Иску́сство ABC (англ. ABC Art) — художественное течение, возникшее в Нью-Йорке в 1960-х годах. В теории искусства обычно рассматривается как реакция на художественные формы абстрактного экспрессионизма, а также на связанные с ним дискурс, институции и идеологии[1]. Для минимал-арта характерны очищенные от всякого символизма и метафоричности геометрические формы, повторяемость, монохромность, нейтральные поверхности, промышленные материалы и способ изготовления. Минимализм стремится передать упрощённую суть и форму предметов, отсекая вторичные образы и оболочки. Преобладает символика цвета, пятна и линий.',
+    background: '0000BB'
+  }
+]
+
+# Fake Data Methods
+
+def random_artist_id
+  Artist.offset(rand(Artist.count)).first.id
+end
+
+def upload_fake_image
+  uploader = ImageUploader.new(Artwork.new, :image)
+  uploader.cache!(File.open(Dir.glob(File.join(Rails.root, 'lib/tasks/artworks', '*')).sample))
+  uploader
+end
+
+def artwork_year
+  rand(1850..1950)
+end
+
+def random_color
+  colour = "%06x" % (rand * 0xffffff)
+end
+
+# Create Methods
+
+def create_artwork
+  Artwork.create(
+    artist_id: random_artist_id,
+    title:     @artwork_titles.sample,
+    year:      artwork_year,
+    image:     upload_fake_image
+  )
+end
+
+def create_gallery (gallery)
+  Gallery.create(
+    title:      gallery[:title],
+    teaser:     gallery[:teaser],
+    background: random_color
+  )
+end
+
+def create_artist(artist)
+  Artist.create(
+  name: artist[:name],
+  born: artist[:born],
+  died: artist[:died]
+  )
+end
+
+# Seed Database With Fake Data
+
+@artists.each do |artist|
+  a = create_artist(artist)
+  puts "Artist #{a.id} created"
+end
+
+100.times do
+  artwork = create_artwork
+  puts "Artwork #{artwork.id} created"
+end
+
+@galleries.each do |gallery|
+  g = create_gallery(gallery)
+  puts "gallery #{g.id} created"
+end
+
+Gallery.all.each do |gallery|
+  5..20.times do
+    e = gallery.exhibitions.create({
+      artwork_id: Artwork.all.sample.id,
+      gallery_id: gallery.id
+    })
+
+    puts "Gallery #{gallery.id} artwork #{e.artwork_id} exhibition #{e.id} created"
+  end
+end

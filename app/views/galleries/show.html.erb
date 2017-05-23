@@ -1,0 +1,25 @@
+<p id="notice"><%= notice %></p>
+
+<div style="<%= 'background-color: #' + @gallery.background %>">
+  <p>
+    <strong>Title:</strong>
+    <%= @gallery.title %>
+  </p>
+
+  <p>
+    <strong>Teaser:</strong>
+    <%= @gallery.teaser %>
+  </p>
+
+  <p>
+    <strong>Background:</strong>
+    <%= @gallery.background %>
+  </p>
+
+  <%= link_to 'Edit', edit_gallery_path(@gallery) %> |
+  <%= link_to 'Back', galleries_path %>
+
+  <% @gallery.artworks.each do |artwork| %>
+  <%= render 'artworks/show', artwork: artwork %>
+  <% end %>
+</div>
